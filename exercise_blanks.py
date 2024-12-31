@@ -121,7 +121,9 @@ def get_one_hot(size, ind):
     :param ind: the entry index to turn to 1
     :return: numpy ndarray which represents the one-hot vector
     """
-    return
+    one_hot = np.zeros(size)
+    one_hot[ind] = 1
+    return one_hot
 
 
 def average_one_hots(sent, word_to_ind):
@@ -132,7 +134,11 @@ def average_one_hots(sent, word_to_ind):
     :param word_to_ind: a mapping between words to indices
     :return:
     """
-    return
+    indices = [word_to_ind[word] for word in sent.text if word in word_to_ind]
+    if not indices:
+        return np.zeros(len(word_to_ind))
+    one_hots = [get_one_hot(len(word_to_ind), idx) for idx in indices]
+    return np.mean(one_hots, axis=0)  #TODO: CHECK
 
 
 def get_word_to_ind(words_list):
@@ -142,7 +148,15 @@ def get_word_to_ind(words_list):
     :param words_list: a list of words
     :return: the dictionary mapping words to the index
     """
-    return
+    word_ind_dict = {}
+    i = 0
+    for word in words_list:
+        if word in word_ind_dict:
+            continue
+        else:
+            word_ind_dict[word] = i
+            i += 1
+    return word_ind_dict
 
 
 def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
@@ -283,13 +297,15 @@ class LogLinear(nn.Module):
     general class for the log-linear models for sentiment analysis.
     """
     def __init__(self, embedding_dim):
-        return
+        super(LogLinear, self).__init__()
+        self.linear = nn.Linear(embedding_dim, 1)
 
     def forward(self, x):
-        return
+        return self.linear(x)
 
     def predict(self, x):
-        return
+        logit = self.forward(x)
+        return torch.sigmoid(logit)
 
 
 # ------------------------- training functions -------------
@@ -319,7 +335,22 @@ def train_epoch(model, data_iterator, optimizer, criterion):
     :param criterion: the criterion object for the training process.
     """
 
-    return
+    model.train()
+    epoch_loss = 0
+    epoch_acc = 0
+
+    for x_batch, y_batch in data_iterator:
+        optimizer.zero_grad()
+        predictions = model(x_batch).squeeze(1)   # TODO: is it calling forward only?
+        loss = criterion(predictions, y_batch)
+        acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss.item()
+        epoch_acc += acc.item()
+
+    return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator)
 
 
 def evaluate(model, data_iterator, criterion):
