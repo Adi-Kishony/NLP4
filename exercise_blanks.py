@@ -90,7 +90,7 @@ def load_word2vec():
     return wv_from_bin
 
 
-def create_or_load_slim_w2v(words_list, cache_w2v=False):
+def create_or_load_slim_w2v(words_list, cache_w2v=True):
     """
     returns word2vec dict only for words which appear in the dataset.
     :param words_list: list of words to use for the w2v dict
@@ -117,7 +117,12 @@ def get_w2v_average(sent, word_to_vec, embedding_dim):
     :param embedding_dim: the dimension of the word embedding vectors
     :return The average embedding vector as numpy ndarray.
     """
-    return
+    embeddings = np.zeros((W2V_EMBEDDING_DIM, len(sent.text)))
+    for i, word in enumerate(sent.text):
+        if word in word_to_vec:
+            embeddings[:, i] = word_to_vec[word]
+
+    return np.mean(embeddings, axis=1) #TODO: CHECK
 
 
 def get_one_hot(size, ind):
@@ -144,7 +149,7 @@ def average_one_hots(sent, word_to_ind):
     if not indices:
         return np.zeros(len(word_to_ind))
     one_hots = [get_one_hot(len(word_to_ind), idx) for idx in indices]
-    return np.mean(one_hots, axis=0)  #TODO: CHECK
+    return np.mean(one_hots, axis=0)
 
 
 def get_word_to_ind(words_list):
@@ -449,12 +454,31 @@ def train_log_linear_with_one_hot():
     Here comes your code for training and evaluation of the log linear model with one hot representation.
     """
     n_epochs = 20
-    data_manager = DataManager(data_type="onehot_average", batch_size=64)
+    data_manager = DataManager(data_type=ONEHOT_AVERAGE, batch_size=64)
     input_dim = data_manager.get_input_shape()[0]
     model = LogLinear(input_dim)
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
 
+    plot_acc_loss(model, history, data_manager, n_epochs)
+
+
+
+def train_log_linear_with_w2v():
+    """
+    Here comes your code for training and evaluation of the log linear model with word embeddings
+    representation.
+    """
+    n_epochs = 20
+    data_manager = DataManager(data_type=W2V_AVERAGE, batch_size=64)
+    input_dim = data_manager.get_input_shape()[0]
+    model = LogLinear(input_dim)
+    model.to(device)
+    history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
+
+    plot_acc_loss(model, history, data_manager, n_epochs)
+
+def plot_acc_loss(model, history, data_manager, n_epochs=20):
     # Plot loss
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, n_epochs + 1), history['train_loss'], label='Train Loss')
@@ -489,15 +513,6 @@ def train_log_linear_with_one_hot():
     print(f"Validation Accuracy: {val_acc:.4f}")
     print(f"Test Accuracy: {test_acc:.4f}")
 
-
-def train_log_linear_with_w2v():
-    """
-    Here comes your code for training and evaluation of the log linear model with word embeddings
-    representation.
-    """
-    return
-
-
 def train_lstm_with_w2v():
     """
     Here comes your code for training and evaluation of the LSTM model.
@@ -507,6 +522,6 @@ def train_lstm_with_w2v():
 
 if __name__ == '__main__':
 
-    train_log_linear_with_one_hot()
-    # train_log_linear_with_w2v()
+    # train_log_linear_with_one_hot()
+    train_log_linear_with_w2v()
     # train_lstm_with_w2v()
