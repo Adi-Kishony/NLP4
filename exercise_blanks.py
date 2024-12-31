@@ -9,6 +9,8 @@ import data_loader
 import pickle
 import matplotlib.pyplot as plt
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print("Using device: ", device)
 
 # ------------------------------------------- Constants ----------------------------------------
 
@@ -346,6 +348,8 @@ def train_epoch(model, data_iterator, optimizer, criterion):
     for x_batch, y_batch in data_iterator:
         optimizer.zero_grad()
         x_batch = x_batch.float()
+        x_batch = x_batch.to(device)
+        y_batch = y_batch.to(device)
         predictions = model(x_batch).squeeze(1)
         loss = criterion(predictions, y_batch)
         acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
@@ -373,6 +377,8 @@ def evaluate(model, data_iterator, criterion):
     with torch.no_grad():
         for x_batch, y_batch in data_iterator:
             x_batch = x_batch.float()
+            x_batch = x_batch.to(device)
+            y_batch = y_batch.to(device)
             predictions = model(x_batch).squeeze(1)
             loss = criterion(predictions, y_batch)
             acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
@@ -446,6 +452,7 @@ def train_log_linear_with_one_hot():
     data_manager = DataManager(data_type="onehot_average", batch_size=64)
     input_dim = data_manager.get_input_shape()[0]
     model = LogLinear(input_dim)
+    model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
 
     # Plot loss
@@ -499,6 +506,7 @@ def train_lstm_with_w2v():
 
 
 if __name__ == '__main__':
+
     train_log_linear_with_one_hot()
     # train_log_linear_with_w2v()
     # train_lstm_with_w2v()
