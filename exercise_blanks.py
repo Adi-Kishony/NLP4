@@ -304,7 +304,9 @@ def binary_accuracy(preds, y):
     :return: scalar value - (<number of accurate predictions> / <number of examples>)
     """
 
-    return
+    rounded_preds = torch.round(preds)
+    correct = (rounded_preds == y).float()
+    return correct.sum() / len(correct)
 
 
 def train_epoch(model, data_iterator, optimizer, criterion):
