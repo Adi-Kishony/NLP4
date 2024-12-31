@@ -345,7 +345,8 @@ def train_epoch(model, data_iterator, optimizer, criterion):
 
     for x_batch, y_batch in data_iterator:
         optimizer.zero_grad()
-        predictions = model(x_batch).squeeze(1)   # TODO: is it calling forward only?
+        x_batch = x_batch.float()
+        predictions = model(x_batch).squeeze(1)
         loss = criterion(predictions, y_batch)
         acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
         loss.backward()
@@ -371,6 +372,7 @@ def evaluate(model, data_iterator, criterion):
 
     with torch.no_grad():
         for x_batch, y_batch in data_iterator:
+            x_batch = x_batch.float()
             predictions = model(x_batch).squeeze(1)
             loss = criterion(predictions, y_batch)
             acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
