@@ -1,14 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 import numpy as np
 import os
-from torch.utils.data import DataLoader, TensorDataset, Dataset
-import operator
+from torch.utils.data import DataLoader, Dataset
 import data_loader
 import pickle
-import tqdm
 
 # ------------------------------------------- Constants ----------------------------------------
 
