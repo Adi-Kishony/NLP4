@@ -2,9 +2,13 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os
+
+import tqdm
 from torch.utils.data import DataLoader, Dataset
 import data_loader
 import pickle
+import matplotlib.pyplot as plt
+
 
 # ------------------------------------------- Constants ----------------------------------------
 
@@ -361,7 +365,20 @@ def evaluate(model, data_iterator, criterion):
     :param criterion: the loss criterion used for evaluation
     :return: tuple of (average loss over all examples, average accuracy over all examples)
     """
-    return
+    model.eval()
+    epoch_loss = 0
+    epoch_acc = 0
+
+    with torch.no_grad():
+        for x_batch, y_batch in data_iterator:
+            predictions = model(x_batch).squeeze(1)
+            loss = criterion(predictions, y_batch)
+            acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
+
+            epoch_loss += loss.item()
+            epoch_acc += acc.item()
+
+    return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator)
 
 
 def get_predictions_for_data(model, data_iter):
@@ -374,10 +391,18 @@ def get_predictions_for_data(model, data_iter):
     :param data_iter: torch iterator as given by the DataManager
     :return:
     """
-    return
+    model.eval() # TODO: why?
+    predictions = []
+
+    with torch.no_grad():
+        for x_batch, _ in data_iter:
+            batch_predictions = model.predict(x_batch).squeeze(1)
+            predictions.extend(batch_predictions.cpu().numpy())
+
+    return predictions
 
 
-def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
+def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):  # TODO: tweaking?
     """
     Runs the full training procedure for the given model. The optimization should be done using the Adam
     optimizer with all parameters but learning rate and weight decay set to default.
@@ -387,14 +412,73 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     :param lr: learning rate to be used for optimization
     :param weight_decay: parameter for l2 regularization
     """
-    return
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    criterion = nn.BCEWithLogitsLoss()
+
+    train_iterator = data_manager.get_torch_iterator(TRAIN)
+    val_iterator = data_manager.get_torch_iterator(VAL)
+
+    history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
+
+    for epoch in tqdm.tqdm(range(n_epochs)):
+        train_loss, train_acc = train_epoch(model, train_iterator, optimizer, criterion)
+        val_loss, val_acc = evaluate(model, val_iterator, criterion)
+
+        history["train_loss"].append(train_loss)
+        history["train_acc"].append(train_acc)
+        history["val_loss"].append(val_loss)
+        history["val_acc"].append(val_acc)
+
+        print(f"Epoch {epoch + 1}/{n_epochs} | "
+              f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f} | "
+              f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+
+    return history
 
 
 def train_log_linear_with_one_hot():
     """
     Here comes your code for training and evaluation of the log linear model with one hot representation.
     """
-    return
+    n_epochs = 20
+    data_manager = DataManager(data_type="onehot_average", batch_size=64)
+    input_dim = data_manager.get_input_shape()[0]
+    model = LogLinear(input_dim)
+    history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
+
+    # Plot loss
+    plt.figure(figsize=(10, 5))
+    plt.plot(range(1, n_epochs + 1), history['train_loss'], label='Train Loss')
+    plt.plot(range(1, n_epochs + 1), history['val_loss'], label='Validation Loss')
+    plt.title('Train and Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # Plot accuracy
+    plt.figure(figsize=(10, 5))
+    plt.plot(range(1, n_epochs + 1), history['train_acc'], label='Train Accuracy')
+    plt.plot(range(1, n_epochs + 1), history['val_acc'], label='Validation Accuracy')
+    plt.title('Train and Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    test_iterator = data_manager.get_torch_iterator("test")
+    test_loss, test_acc = evaluate(model, test_iterator, nn.BCEWithLogitsLoss())
+    print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
+
+    train_iterator = data_manager.get_torch_iterator("train")
+    train_loss, train_acc = evaluate(model, train_iterator, nn.BCEWithLogitsLoss())
+    val_iterator = data_manager.get_torch_iterator("val")
+    val_loss, val_acc = evaluate(model, val_iterator, nn.BCEWithLogitsLoss())
+    print(f"Train Accuracy: {train_acc:.4f}")
+    print(f"Validation Accuracy: {val_acc:.4f}")
+    print(f"Test Accuracy: {test_acc:.4f}")
 
 
 def train_log_linear_with_w2v():
