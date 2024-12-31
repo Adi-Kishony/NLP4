@@ -149,7 +149,7 @@ def average_one_hots(sent, word_to_ind):
     if not indices:
         return np.zeros(len(word_to_ind))
     one_hots = [get_one_hot(len(word_to_ind), idx) for idx in indices]
-    return np.mean(one_hots, axis=0)
+    return np.mean(one_hots, axis=0)#
 
 
 def get_word_to_ind(words_list):
