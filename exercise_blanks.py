@@ -360,7 +360,7 @@ def train_epoch(model, data_iterator, optimizer, criterion):
     epoch_loss = 0
     epoch_acc = 0
 
-    for x_batch, y_batch in tqdm.tqdm(data_iterator):
+    for x_batch, y_batch in data_iterator:
         optimizer.zero_grad()
         x_batch = x_batch.float()
         x_batch = x_batch.to(device)
