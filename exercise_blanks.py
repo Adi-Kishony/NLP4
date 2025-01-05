@@ -117,12 +117,12 @@ def get_w2v_average(sent, word_to_vec, embedding_dim):
     :param embedding_dim: the dimension of the word embedding vectors
     :return The average embedding vector as numpy ndarray.
     """
-    embeddings = np.zeros((W2V_EMBEDDING_DIM, len(sent.text)))
+    embeddings = np.zeros((embedding_dim, len(sent.text)))
     for i, word in enumerate(sent.text):
         if word in word_to_vec:
             embeddings[:, i] = word_to_vec[word]
 
-    return np.mean(embeddings, axis=1) #TODO: CHECK
+    return np.mean(embeddings, axis=1)
 
 
 def get_one_hot(size, ind):
@@ -180,7 +180,10 @@ def sentence_to_embedding(sent, word_to_vec, seq_len, embedding_dim=300):
     :param embedding_dim: the dimension of the w2v embedding
     :return: numpy ndarray of shape (seq_len, embedding_dim) with the representation of the sentence
     """
-    return
+    embeddings = [word_to_vec[word] if word in word_to_vec else np.zeros(embedding_dim) for word in sent.text]
+    if len(embeddings) < seq_len:
+        embeddings.extend([np.zeros(embedding_dim)] * (seq_len - len(embeddings)))
+    return np.array(embeddings[:seq_len])
 
 
 class OnlineDataset(Dataset):
@@ -294,13 +297,20 @@ class LSTM(nn.Module):
     An LSTM for sentiment analysis with architecture as described in the exercise description.
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
-        return
+        super(LSTM, self).__init__()
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, batch_first=True, bidirectional=True)
+        self.fc = nn.Linear(hidden_dim * 2, 1)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, text):
-        return
+        _, (hidden, _) = self.lstm(text)
+        hidden = torch.cat((hidden[-2, :, :], hidden[-1, :, :]), dim=1)
+        hidden = self.dropout(hidden)
+        return self.fc(hidden)
 
     def predict(self, text):
-        return
+        logits = self.forward(text)
+        return torch.sigmoid(logits)
 
 
 class LogLinear(nn.Module):
@@ -471,6 +481,7 @@ def train_log_linear_with_w2v():
     """
     n_epochs = 20
     data_manager = DataManager(data_type=W2V_AVERAGE, batch_size=64)
+    # TODO input dim const
     input_dim = data_manager.get_input_shape()[0]
     model = LogLinear(input_dim)
     model.to(device)
@@ -517,11 +528,17 @@ def train_lstm_with_w2v():
     """
     Here comes your code for training and evaluation of the LSTM model.
     """
-    return
+    n_epochs = 4
+    data_manager = DataManager(data_type=W2V_SEQUENCE, batch_size=64, embedding_dim=W2V_EMBEDDING_DIM)
+    model = LSTM(embedding_dim=W2V_EMBEDDING_DIM, hidden_dim=100, n_layers=52, dropout=0.5)
+    model.to(device)
+    history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.001, weight_decay=0.0001)
+
+    plot_acc_loss(model, history, data_manager, n_epochs)
 
 
 if __name__ == '__main__':
 
     # train_log_linear_with_one_hot()
-    train_log_linear_with_w2v()
-    # train_lstm_with_w2v()
+    # train_log_linear_with_w2v()
+    train_lstm_with_w2v()
