@@ -543,4 +543,4 @@ if __name__ == '__main__':
     # train_log_linear_with_w2v()
     # train_lstm_with_w2v()
     plt.plot([1, 2, 3])
-    plt.savefig("test.png")
+    plt.savefig("test1.png")
