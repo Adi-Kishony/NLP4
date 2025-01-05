@@ -470,7 +470,7 @@ def train_log_linear_with_one_hot():
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
 
-    plot_acc_loss(model, history, data_manager, n_epochs)
+    plot_acc_loss(model, history, data_manager, "log_lin_one_hot", n_epochs)
 
 
 
@@ -487,9 +487,9 @@ def train_log_linear_with_w2v():
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
 
-    plot_acc_loss(model, history, data_manager, n_epochs)
+    plot_acc_loss(model, history, data_manager, "log_lin_w2v", n_epochs)
 
-def plot_acc_loss(model, history, data_manager, n_epochs=20):
+def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     # Plot loss
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, n_epochs + 1), history['train_loss'], label='Train Loss')
@@ -500,6 +500,7 @@ def plot_acc_loss(model, history, data_manager, n_epochs=20):
     plt.legend()
     plt.grid()
     plt.show()
+    plt.savefig(f'loss_{title}.png')
 
     # Plot accuracy
     plt.figure(figsize=(10, 5))
@@ -511,6 +512,7 @@ def plot_acc_loss(model, history, data_manager, n_epochs=20):
     plt.legend()
     plt.grid()
     plt.show()
+    plt.savefig(f'accuracy_{title}.png')
 
     test_iterator = data_manager.get_torch_iterator("test")
     test_loss, test_acc = evaluate(model, test_iterator, nn.BCEWithLogitsLoss())
@@ -534,11 +536,11 @@ def train_lstm_with_w2v():
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.001, weight_decay=0.0001)
 
-    plot_acc_loss(model, history, data_manager, n_epochs)
+    plot_acc_loss(model, history, data_manager, "lstm", n_epochs)
 
 
 if __name__ == '__main__':
 
-    train_log_linear_with_one_hot()
+    # train_log_linear_with_one_hot()
     # train_log_linear_with_w2v()
-    # train_lstm_with_w2v()
+    train_lstm_with_w2v()
