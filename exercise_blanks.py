@@ -6,6 +6,7 @@ import os
 import tqdm
 from torch.utils.data import DataLoader, Dataset
 import data_loader
+from data_loader import get_rare_words_examples, get_negated_polarity_examples
 import pickle
 import matplotlib.pyplot as plt
 
@@ -556,8 +557,8 @@ def evaluate_all_subsets(model, history, data_manager, title, n_epochs=20):
 
 def calculate_accuracy_over_subsets(model, data_iter, dataset):
     # Get indices for rare words and negated words subsets
-    rare_words_indices = dataset.get_rare_words_examples(dataset.sentences, dataset, num_sentences=50)
-    negated_words_indices = dataset.get_negated_polarity_examples(dataset.sentences)
+    rare_words_indices = get_rare_words_examples(dataset.sentences, dataset, num_sentences=50)
+    negated_words_indices = get_negated_polarity_examples(dataset.sentences)
 
     # Get predictions for rare words subset
     rare_predictions = get_predictions_for_data(model, [data_iter[idx] for idx in rare_words_indices])
