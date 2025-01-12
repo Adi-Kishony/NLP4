@@ -536,7 +536,7 @@ def train_lstm_with_w2v():
     """
     n_epochs = 4
     data_manager = DataManager(data_type=W2V_SEQUENCE, batch_size=64, embedding_dim=W2V_EMBEDDING_DIM)
-    model = LSTM(embedding_dim=W2V_EMBEDDING_DIM, hidden_dim=100, n_layers=52, dropout=0.5)
+    model = LSTM(embedding_dim=W2V_EMBEDDING_DIM, hidden_dim=100, n_layers=1, dropout=0.5)
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.001, weight_decay=0.0001)
 
@@ -547,4 +547,5 @@ if __name__ == '__main__':
 
     # train_log_linear_with_one_hot()
     # train_log_linear_with_w2v()
+    print("!")
     train_lstm_with_w2v()
