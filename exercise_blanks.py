@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 import data_loader
 import pickle
 import matplotlib.pyplot as plt
-
+from data_loader import get_negated_polarity_examples, get_rare_words_examples
 
 
 # ------------------------------------------- Constants ----------------------------------------
@@ -288,6 +288,11 @@ class DataManager():
         """
         return self.torch_datasets[TRAIN][0][0].shape
 
+    def get_dataset(self):
+        return self.sentiment_dataset
+
+    def get_sentences(self, data_subset=TRAIN):
+        return self.sentences[data_subset]
 
 
 
@@ -381,7 +386,7 @@ def train_epoch(model, data_iterator, optimizer, criterion):
     return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator)
 
 
-def evaluate(model, data_iterator, criterion):
+def evaluate(model, data_iterator, criterion, data_manager=None):
     """
     evaluate the model performance on the given data
     :param model: one of our models..
@@ -392,6 +397,13 @@ def evaluate(model, data_iterator, criterion):
     model.eval()
     epoch_loss = 0
     epoch_acc = 0
+    epoch_acc_rare = 0
+    epoch_acc_negated = 0
+    if data_manager:
+        dataset = data_manager.get_dataset()
+        sentences = data_manager.get_sentences(TRAIN)
+        rare_words_examples_indices = get_rare_words_examples(sentences, dataset)
+        negated_polarity_examples_indices = get_negated_polarity_examples(sentences)
 
     with torch.no_grad():
         for x_batch, y_batch in data_iterator:
@@ -399,13 +411,25 @@ def evaluate(model, data_iterator, criterion):
             x_batch = x_batch.to(device)
             y_batch = y_batch.to(device)
             predictions = model(x_batch).squeeze(1)
+            if data_manager:
+                pred_rare = predictions[rare_words_examples_indices]
+                pred_negated = predictions[negated_polarity_examples_indices]
+                true_rare = y_batch[rare_words_examples_indices]
+                true_negated = y_batch[negated_polarity_examples_indices]
+                acc_rare = binary_accuracy(torch.sigmoid(pred_rare), true_rare)
+                acc_negated = binary_accuracy(torch.sigmoid(pred_negated), true_negated)
             loss = criterion(predictions, y_batch)
             acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
-
+            if data_manager:
+                epoch_acc_rare += acc_rare.item()
+                epoch_acc_negated += acc_negated.item()
             epoch_loss += loss.item()
             epoch_acc += acc.item()
 
-    return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator)
+    if data_manager:
+
+        return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator), epoch_acc_rare / len(rare_words_examples_indices), epoch_acc_negated / len(negated_polarity_examples_indices)
+    return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator), None, None
 
 
 def get_predictions_for_data(model, data_iter):
@@ -449,7 +473,7 @@ def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):  # TODO: tw
 
     for epoch in tqdm.tqdm(range(n_epochs)):
         train_loss, train_acc = train_epoch(model, train_iterator, optimizer, criterion)
-        val_loss, val_acc = evaluate(model, val_iterator, criterion)
+        val_loss, val_acc, _, _ = evaluate(model, val_iterator, criterion)
 
         history["train_loss"].append(train_loss)
         history["train_acc"].append(train_acc)
@@ -485,7 +509,6 @@ def train_log_linear_with_w2v():
     """
     n_epochs = 20
     data_manager = DataManager(data_type=W2V_AVERAGE, batch_size=64)
-    # TODO input dim const
     input_dim = data_manager.get_input_shape()[0]
     model = LogLinear(input_dim)
     model.to(device)
@@ -519,16 +542,14 @@ def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     plt.show()
 
     test_iterator = data_manager.get_torch_iterator("test")
-    test_loss, test_acc = evaluate(model, test_iterator, nn.BCEWithLogitsLoss())
+    test_loss, test_acc, rare_acc, negated_acc = evaluate(model, test_iterator, nn.BCEWithLogitsLoss(), data_manager)
+    print(
+        f"Rare words accuracy for model {title}: {rare_acc}")
+    print(
+        f"Negated polarity accuracy for model {title}: {rare_acc}")
     print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
 
-    train_iterator = data_manager.get_torch_iterator("train")
-    train_loss, train_acc = evaluate(model, train_iterator, nn.BCEWithLogitsLoss())
-    val_iterator = data_manager.get_torch_iterator("val")
-    val_loss, val_acc = evaluate(model, val_iterator, nn.BCEWithLogitsLoss())
-    print(f"Train Accuracy: {train_acc:.4f}")
-    print(f"Validation Accuracy: {val_acc:.4f}")
-    print(f"Test Accuracy: {test_acc:.4f}")
+
 
 def train_lstm_with_w2v():
     """
@@ -539,12 +560,11 @@ def train_lstm_with_w2v():
     model = LSTM(embedding_dim=W2V_EMBEDDING_DIM, hidden_dim=100, n_layers=1, dropout=0.5)
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.001, weight_decay=0.0001)
-
     plot_acc_loss(model, history, data_manager, "lstm", n_epochs)
 
 
 if __name__ == '__main__':
 
-    # train_log_linear_with_one_hot()
+    train_log_linear_with_one_hot()
     # train_log_linear_with_w2v()
-    train_lstm_with_w2v()
+    # train_lstm_with_w2v()
