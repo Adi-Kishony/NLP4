@@ -299,7 +299,8 @@ class LSTM(nn.Module):
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
         super(LSTM, self).__init__()
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, batch_first=True, bidirectional=True)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, dropout=dropout,
+                            batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_dim * 2, 1)
         self.dropout = nn.Dropout(dropout)
 
@@ -311,7 +312,9 @@ class LSTM(nn.Module):
 
     def predict(self, text):
         logits = self.forward(text)
-        return torch.sigmoid(logits)
+        prob = torch.sigmoid(logits)
+        pred = (prob >= 0.5).float()
+        return pred.astype(np.int32)
 
 
 class LogLinear(nn.Module):
