@@ -401,7 +401,7 @@ def evaluate(model, data_iterator, criterion, data_manager=None):
     epoch_acc_negated = 0
     if data_manager:
         dataset = data_manager.get_dataset()
-        sentences = data_manager.get_sentences(TRAIN)
+        sentences = data_manager.get_sentences(TEST)
         rare_words_examples_indices = get_rare_words_examples(sentences, dataset)
         negated_polarity_examples_indices = get_negated_polarity_examples(sentences)
 
