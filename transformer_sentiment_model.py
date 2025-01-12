@@ -105,39 +105,49 @@ def transformer_sentiment_analysis():
     # Store metrics
     train_losses = []
     val_accuracies = []
+    train_accuracies = []
+    val_losses = []
+
 
     # Training and evaluation loop
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}/{epochs}")
         train_loss = train_epoch(model, train_loader, optimizer, dev)
+        val_loss = evaluate_model(model, val_loader, dev, metric)['loss']
         val_accuracy = evaluate_model(model, val_loader, dev, metric)
-
+        train_accuracy = evaluate_model(model, train_loader, dev, metric)
         train_losses.append(train_loss)
         val_accuracies.append(val_accuracy['accuracy'])
-
+        train_accuracy.append(train_accuracy['accuracy'])
+        val_losses.append(val_loss)
         print(f"Train Loss: {train_loss:.4f}, Validation Accuracy: {val_accuracy['accuracy']:.4f}")
 
     # Plot training loss and validation accuracy
     epochs_range = list(range(1, epochs + 1))
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(10, 5))
 
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs_range, train_losses, label='Train Loss', marker='o')
+    plt.plot(epochs_range, train_losses, label='Train Loss')
+    plt.plot(epochs_range, val_losses, label='Validation Loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title('Training Loss')
+    plt.title('Transformer Training Loss')
     plt.legend()
+    plt.grid()
+    plt.savefig(f'loss_transformer.png')
+    plt.show()
 
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs_range, val_accuracies, label='Validation Accuracy', marker='o')
+    plt.figure(figsize=(10, 5))
+    plt.plot(epochs_range, train_accuracies, label='Train Accuracy')
+    plt.plot(epochs_range, val_accuracies, label='Validation Accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
-    plt.title('Validation Accuracy')
+    plt.title('Transformer Validation Accuracy')
     plt.legend()
-
-    plt.tight_layout()
+    plt.grid()
+    plt.savefig(f'acc_transformer.png')
     plt.show()
 
 
 if __name__ == '__main__':
     transformer_sentiment_analysis()
+
