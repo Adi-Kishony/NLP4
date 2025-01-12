@@ -541,12 +541,17 @@ def evaluate_all_subsets(model, history, data_manager, title, n_epochs=20):
     # negated = test_set[negated_indices]
     # rare = test_set[rare_indices]
 
-    dataset = DataLoader.SentimentTreeBank()
+    # dataset = DataLoader.SentimentTreeBank()
+    # test_set = dataset.get_test_set()
+    # test_iter = data_manager.get_torch_iterator("test")
+    # rare_accuracy, negated_accuracy = calculate_accuracy_over_subsets(model, test_iter, test_set)
+    # print(f'rare accuracy: {rare_accuracy}, negated accuracy: {negated_accuracy}')
+
+    dataset = data_loader.SentimentTreeBank()
     test_set = dataset.get_test_set()
     test_iter = data_manager.get_torch_iterator("test")
-    rare_accuracy, negated_accuracy = calculate_accuracy_over_subsets(model, test_iter, test_set)
+    rare_accuracy, negated_accuracy = calculate_accuracy_over_subsets(model, test_iter, dataset)
     print(f'rare accuracy: {rare_accuracy}, negated accuracy: {negated_accuracy}')
-
 
 
 def calculate_accuracy_over_subsets(model, data_iter, dataset):
