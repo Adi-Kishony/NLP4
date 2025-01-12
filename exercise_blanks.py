@@ -150,7 +150,7 @@ def average_one_hots(sent, word_to_ind):
     if not indices:
         return np.zeros(len(word_to_ind))
     one_hots = [get_one_hot(len(word_to_ind), idx) for idx in indices]
-    return np.mean(one_hots, axis=0)#
+    return np.mean(one_hots, axis=0)
 
 
 def get_word_to_ind(words_list):
@@ -474,7 +474,7 @@ def train_log_linear_with_one_hot():
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
 
-    plot_acc_loss(model, history, data_manager, "log_lin_one_hot", n_epochs)
+    evaluate_all_subsets(model, history, data_manager, "log_lin_one_hot", n_epochs)
 
 
 
@@ -491,9 +491,9 @@ def train_log_linear_with_w2v():
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
 
-    plot_acc_loss(model, history, data_manager, "log_lin_w2v", n_epochs)
+    evaluate_all_subsets(model, history, data_manager, "log_lin_w2v", n_epochs)
 
-def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
+def evaluate_all_subsets(model, history, data_manager, title, n_epochs=20):
     # Plot loss
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, n_epochs + 1), history['train_loss'], label='Train Loss')
@@ -522,13 +522,56 @@ def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     test_loss, test_acc = evaluate(model, test_iterator, nn.BCEWithLogitsLoss())
     print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
 
-    train_iterator = data_manager.get_torch_iterator("train")
-    train_loss, train_acc = evaluate(model, train_iterator, nn.BCEWithLogitsLoss())
-    val_iterator = data_manager.get_torch_iterator("val")
-    val_loss, val_acc = evaluate(model, val_iterator, nn.BCEWithLogitsLoss())
-    print(f"Train Accuracy: {train_acc:.4f}")
-    print(f"Validation Accuracy: {val_acc:.4f}")
-    print(f"Test Accuracy: {test_acc:.4f}")
+    # train_iterator = data_manager.get_torch_iterator("train")
+    # train_loss, train_acc = evaluate(model, train_iterator, nn.BCEWithLogitsLoss())
+    # val_iterator = data_manager.get_torch_iterator("val")
+    # val_loss, val_acc = evaluate(model, val_iterator, nn.BCEWithLogitsLoss())
+    # print(f"Train Accuracy: {train_acc:.4f}")
+    # print(f"Validation Accuracy: {val_acc:.4f}")
+    # print(f"Test Accuracy: {test_acc:.4f}")
+
+    # test_iter = data_manager.get_torch_iterator("test")
+    # test_preds = get_predictions_for_data(model, test_iter)
+
+    # dataset = DataLoader.SentimentTreeBank()
+    # test_set = dataset.get_test_set()
+    # negated_indices = DataLoader.get_negated_polarity_examples(test_set)
+    # rare_indices = DataLoader.get_rare_words_examples(test_set, dataset)
+    #
+    # negated = test_set[negated_indices]
+    # rare = test_set[rare_indices]
+
+    dataset = DataLoader.SentimentTreeBank()
+    test_set = dataset.get_test_set()
+    test_iter = data_manager.get_torch_iterator("test")
+    rare_accuracy, negated_accuracy = calculate_accuracy_over_subsets(model, test_iter, test_set)
+    print(f'rare accuracy: {rare_accuracy}, negated accuracy: {negated_accuracy}')
+
+
+
+def calculate_accuracy_over_subsets(model, data_iter, dataset):
+    # Get indices for rare words and negated words subsets
+    rare_words_indices = DataLoader.get_rare_words_examples(dataset.sentences, dataset, num_sentences=50)
+    negated_words_indices = DataLoader.get_negated_polarity_examples(dataset.sentences)
+
+    # Get predictions for rare words subset
+    rare_predictions = get_predictions_for_data(model, [data_iter[idx] for idx in rare_words_indices])
+
+    # Get predictions for negated words subset
+    negated_predictions = get_predictions_for_data(model, [data_iter[idx] for idx in negated_words_indices])
+
+    # Calculate accuracy for rare words
+    rare_accuracy = sum(rare_predictions == [data_iter[idx].label for idx in rare_words_indices]) / len(rare_words_indices)
+
+    # Calculate accuracy for negated words
+    negated_accuracy = sum(negated_predictions == [data_iter[idx].label for idx in negated_words_indices]) / len(negated_words_indices)
+
+    return rare_accuracy, negated_accuracy
+
+
+
+
+
 
 def train_lstm_with_w2v():
     """
@@ -540,7 +583,11 @@ def train_lstm_with_w2v():
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.001, weight_decay=0.0001)
 
-    plot_acc_loss(model, history, data_manager, "lstm", n_epochs)
+    evaluate_all_subsets(model, history, data_manager, "lstm", n_epochs)
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -548,3 +595,5 @@ if __name__ == '__main__':
     # train_log_linear_with_one_hot()
     # train_log_linear_with_w2v()
     train_lstm_with_w2v()
+
+
