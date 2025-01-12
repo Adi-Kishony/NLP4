@@ -299,7 +299,7 @@ class LSTM(nn.Module):
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
         super(LSTM, self).__init__()
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, dropout=dropout,
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers,
                             batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_dim * 2, 1)
         self.dropout = nn.Dropout(dropout)
@@ -579,7 +579,7 @@ def train_lstm_with_w2v():
     """
     n_epochs = 4
     data_manager = DataManager(data_type=W2V_SEQUENCE, batch_size=64, embedding_dim=W2V_EMBEDDING_DIM)
-    model = LSTM(embedding_dim=W2V_EMBEDDING_DIM, hidden_dim=100, n_layers=52, dropout=0.5)
+    model = LSTM(embedding_dim=W2V_EMBEDDING_DIM, hidden_dim=100, n_layers=1, dropout=0.5)
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.001, weight_decay=0.0001)
 
