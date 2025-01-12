@@ -510,7 +510,7 @@ def train_log_linear_with_w2v():
     representation.
     """
     n_epochs = 20
-    data_manager = DataManager(data_type=W2V_AVERAGE, batch_size=64)
+    data_manager = DataManager(data_type=W2V_AVERAGE, batch_size=64, embedding_dim=W2V_EMBEDDING_DIM)
     input_dim = data_manager.get_input_shape()[0]
     model = LogLinear(input_dim)
     model.to(device)
