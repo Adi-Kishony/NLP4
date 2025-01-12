@@ -566,7 +566,7 @@ def train_lstm_with_w2v():
 
 
 if __name__ == '__main__':
-
+    print("running all models")
     train_log_linear_with_one_hot()
-    # train_log_linear_with_w2v()
-    # train_lstm_with_w2v()
+    train_log_linear_with_w2v()
+    train_lstm_with_w2v()
