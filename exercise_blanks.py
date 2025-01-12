@@ -499,8 +499,8 @@ def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     plt.ylabel('Loss')
     plt.legend()
     plt.grid()
-    plt.show()
     plt.savefig(f'loss_{title}.png')
+    plt.show()
 
     # Plot accuracy
     plt.figure(figsize=(10, 5))
@@ -511,8 +511,8 @@ def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     plt.ylabel('Accuracy')
     plt.legend()
     plt.grid()
-    plt.show()
     plt.savefig(f'accuracy_{title}.png')
+    plt.show()
 
     test_iterator = data_manager.get_torch_iterator("test")
     test_loss, test_acc = evaluate(model, test_iterator, nn.BCEWithLogitsLoss())
