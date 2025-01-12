@@ -556,8 +556,8 @@ def evaluate_all_subsets(model, history, data_manager, title, n_epochs=20):
 
 def calculate_accuracy_over_subsets(model, data_iter, dataset):
     # Get indices for rare words and negated words subsets
-    rare_words_indices = DataLoader.get_rare_words_examples(dataset.sentences, dataset, num_sentences=50)
-    negated_words_indices = DataLoader.get_negated_polarity_examples(dataset.sentences)
+    rare_words_indices = dataset.get_rare_words_examples(dataset.sentences, dataset, num_sentences=50)
+    negated_words_indices = dataset.get_negated_polarity_examples(dataset.sentences)
 
     # Get predictions for rare words subset
     rare_predictions = get_predictions_for_data(model, [data_iter[idx] for idx in rare_words_indices])
@@ -572,6 +572,7 @@ def calculate_accuracy_over_subsets(model, data_iter, dataset):
     negated_accuracy = sum(negated_predictions == [data_iter[idx].label for idx in negated_words_indices]) / len(negated_words_indices)
 
     return rare_accuracy, negated_accuracy
+
 
 
 
