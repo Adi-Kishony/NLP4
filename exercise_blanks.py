@@ -9,8 +9,7 @@ import data_loader
 import pickle
 import matplotlib.pyplot as plt
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print("Using device: ", device)
+
 
 # ------------------------------------------- Constants ----------------------------------------
 
@@ -76,6 +75,8 @@ def load(model, path, optimizer):
 
 
 # ------------------------------------------ Data utilities ----------------------------------------
+device = get_available_device()
+print("Using device: ", device)
 
 def load_word2vec():
     """ Load Word2Vec Vectors
