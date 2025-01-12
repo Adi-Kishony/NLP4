@@ -514,14 +514,14 @@ def train_log_linear_with_w2v():
     model.to(device)
     history = train_model(model, data_manager, n_epochs=n_epochs, lr=0.01, weight_decay=0.001)
 
-    plot_acc_loss(model, history, data_manager, "log_lin_w2v", n_epochs)
+    plot_acc_loss(model, history, data_manager, "log linear w2v", n_epochs)
 
 def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     # Plot loss
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, n_epochs + 1), history['train_loss'], label='Train Loss')
     plt.plot(range(1, n_epochs + 1), history['val_loss'], label='Validation Loss')
-    plt.title('Train and Validation Loss')
+    plt.title(title + " Loss")
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
@@ -533,7 +533,7 @@ def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, n_epochs + 1), history['train_acc'], label='Train Accuracy')
     plt.plot(range(1, n_epochs + 1), history['val_acc'], label='Validation Accuracy')
-    plt.title('Train and Validation Accuracy')
+    plt.title(title + " Accuracy")
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
