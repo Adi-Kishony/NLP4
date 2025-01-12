@@ -399,6 +399,9 @@ def evaluate(model, data_iterator, criterion, data_manager=None):
     epoch_acc = 0
     epoch_acc_rare = 0
     epoch_acc_negated = 0
+    all_predictions = []
+    all_labels = []
+
     if data_manager:
         dataset = data_manager.get_dataset()
         sentences = data_manager.get_sentences(TEST)
@@ -411,24 +414,23 @@ def evaluate(model, data_iterator, criterion, data_manager=None):
             x_batch = x_batch.to(device)
             y_batch = y_batch.to(device)
             predictions = model(x_batch).squeeze(1)
-            if data_manager:
-                pred_rare = predictions[rare_words_examples_indices]
-                pred_negated = predictions[negated_polarity_examples_indices]
-                true_rare = y_batch[rare_words_examples_indices]
-                true_negated = y_batch[negated_polarity_examples_indices]
-                acc_rare = binary_accuracy(torch.sigmoid(pred_rare), true_rare)
-                acc_negated = binary_accuracy(torch.sigmoid(pred_negated), true_negated)
+            all_predictions.extend(predictions.cpu().numpy())
+            all_labels.extend(y_batch.cpu().numpy())
             loss = criterion(predictions, y_batch)
             acc = binary_accuracy(torch.sigmoid(predictions), y_batch)
-            if data_manager:
-                epoch_acc_rare += acc_rare.item()
-                epoch_acc_negated += acc_negated.item()
             epoch_loss += loss.item()
             epoch_acc += acc.item()
 
     if data_manager:
-
-        return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator), epoch_acc_rare / len(rare_words_examples_indices), epoch_acc_negated / len(negated_polarity_examples_indices)
+        pred_rare = [all_predictions[i] for i in rare_words_examples_indices]
+        pred_negated = [all_predictions[i] for i in
+                        negated_polarity_examples_indices]
+        true_rare = [all_labels[i] for i in rare_words_examples_indices]
+        true_negated = [all_labels[i] for i in
+                        negated_polarity_examples_indices]
+        acc_rare = binary_accuracy(torch.sigmoid(torch.tensor(pred_rare)), torch.tensor(true_rare))
+        acc_negated = binary_accuracy(torch.sigmoid( torch.tensor(pred_negated)), torch.tensor(true_negated))
+        return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator), acc_rare.item(), acc_negated.item()
     return epoch_loss / len(data_iterator), epoch_acc / len(data_iterator), None, None
 
 
@@ -566,5 +568,5 @@ def train_lstm_with_w2v():
 if __name__ == '__main__':
 
     train_log_linear_with_one_hot()
-    train_log_linear_with_w2v()
-    train_lstm_with_w2v()
+    # train_log_linear_with_w2v()
+    # train_lstm_with_w2v()
