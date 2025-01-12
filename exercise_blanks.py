@@ -548,7 +548,7 @@ def plot_acc_loss(model, history, data_manager, title, n_epochs=20):
     print(
         f"Rare words accuracy for model {title}: {rare_acc}")
     print(
-        f"Negated polarity accuracy for model {title}: {rare_acc}")
+        f"Negated polarity accuracy for model {title}: {negated_acc}")
     print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
 
 
