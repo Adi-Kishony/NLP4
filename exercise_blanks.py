@@ -299,7 +299,7 @@ class LSTM(nn.Module):
     """
     def __init__(self, embedding_dim, hidden_dim, n_layers, dropout):
         super(LSTM, self).__init__()
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, dropout=dropout,
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers,
                             batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_dim * 2, 1)
         self.dropout = nn.Dropout(dropout)
@@ -547,5 +547,4 @@ if __name__ == '__main__':
 
     # train_log_linear_with_one_hot()
     # train_log_linear_with_w2v()
-    print("!")
     train_lstm_with_w2v()
