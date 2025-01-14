@@ -64,32 +64,27 @@ def transformer_sentiment_analysis():
             with torch.no_grad():
                 outputs = model(input_ids=input_ids,
                                 attention_mask=attention_mask, labels=labels)
-                loss = outputs.loss  # Get the loss from the model
+                loss = outputs.loss
                 logits = outputs.logits
                 predictions = torch.argmax(logits, dim=-1)
 
-                # Accumulate the loss
                 batch_size = labels.size(0)
                 total_loss += loss.item() * batch_size
                 total_samples += batch_size
 
-                # Add predictions and references to metric
                 if metric is not None:
                     metric.add_batch(predictions=predictions.cpu().numpy(),
                                      references=labels.cpu().numpy())
 
-        # Compute the average loss
         avg_loss = total_loss / total_samples
 
-        # Compute other metrics if provided
         other_metrics = metric.compute() if metric is not None else None
 
         return {"loss": avg_loss, "metrics": other_metrics}
 
-    # Load the dataset
     dataset = SentimentTreeBank(path="stanfordSentimentTreebank", split_words=True)
 
-    # Split data into train and validation sets
+    # Split data into train, validation, test,  and special subsets
     train_data = dataset.get_train_set()
     val_data = dataset.get_validation_set()
     test_data = dataset.get_test_set()
@@ -111,7 +106,7 @@ def transformer_sentiment_analysis():
 
     # Parameters
     dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    num_labels = 2  # Binary classification
+    num_labels = 2
     epochs = 2
     batch_size = 64
     learning_rate = 1e-5
@@ -140,10 +135,8 @@ def transformer_sentiment_analysis():
     test_neg_dataset = Dataset(test_neg_encodings, test_neg_sentiment_labels)
     test_neg_loader = DataLoader(test_neg_dataset, batch_size=batch_size)
 
-    # Optimizer
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-    # Store metrics
     train_losses = []
     val_accuracies = []
     train_accuracies = []
@@ -197,8 +190,6 @@ def transformer_sentiment_analysis():
     plt.grid()
     plt.savefig(f'acc_transformer.png')
     plt.show()
-
-
 
 
 if __name__ == '__main__':

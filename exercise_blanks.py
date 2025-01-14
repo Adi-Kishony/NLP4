@@ -150,7 +150,7 @@ def average_one_hots(sent, word_to_ind):
     if not indices:
         return np.zeros(len(word_to_ind))
     one_hots = [get_one_hot(len(word_to_ind), idx) for idx in indices]
-    return np.mean(one_hots, axis=0)#
+    return np.mean(one_hots, axis=0)
 
 
 def get_word_to_ind(words_list):
@@ -397,8 +397,6 @@ def evaluate(model, data_iterator, criterion, data_manager=None):
     model.eval()
     epoch_loss = 0
     epoch_acc = 0
-    epoch_acc_rare = 0
-    epoch_acc_negated = 0
     all_predictions = []
     all_labels = []
 
@@ -444,7 +442,7 @@ def get_predictions_for_data(model, data_iter):
     :param data_iter: torch iterator as given by the DataManager
     :return:
     """
-    model.eval() # TODO: why?
+    model.eval()
     predictions = []
 
     with torch.no_grad():
@@ -455,7 +453,7 @@ def get_predictions_for_data(model, data_iter):
     return predictions
 
 
-def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):  # TODO: tweaking?
+def train_model(model, data_manager, n_epochs, lr, weight_decay=0.):
     """
     Runs the full training procedure for the given model. The optimization should be done using the Adam
     optimizer with all parameters but learning rate and weight decay set to default.
