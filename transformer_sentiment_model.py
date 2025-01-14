@@ -53,7 +53,6 @@ def transformer_sentiment_analysis():
         model.eval()
         total_loss = 0
         total_samples = 0
-        print(f"metric {metric}")
 
         for batch in tqdm(data_loader, desc="Evaluating"):
             input_ids = batch['input_ids'].to(dev)
@@ -139,7 +138,7 @@ def transformer_sentiment_analysis():
         train_accuracy = evaluate_model(model, train_loader, dev, metric)['metrics']['accuracy']
         train_losses.append(train_loss)
         val_accuracies.append(val_accuracy)
-        train_accuracy.append(train_accuracy)
+        train_accuracies.append(train_accuracy)
         val_losses.append(val_loss)
         print(f"Train Loss: {train_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}")
 
