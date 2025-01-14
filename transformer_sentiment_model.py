@@ -48,21 +48,41 @@ def transformer_sentiment_analysis():
 
     def evaluate_model(model, data_loader, dev, metric=None):
         """
-        Evaluate the model and compute accuracy
+        Evaluate the model and compute accuracy and loss
         """
         model.eval()
+        total_loss = 0
+        total_samples = 0
+
         for batch in tqdm(data_loader, desc="Evaluating"):
             input_ids = batch['input_ids'].to(dev)
             attention_mask = batch['attention_mask'].to(dev)
             labels = batch['labels'].to(dev)
 
             with torch.no_grad():
-                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                outputs = model(input_ids=input_ids,
+                                attention_mask=attention_mask, labels=labels)
+                loss = outputs.loss  # Get the loss from the model
                 logits = outputs.logits
                 predictions = torch.argmax(logits, dim=-1)
-                metric.add_batch(predictions=predictions.cpu().numpy(), references=labels.cpu().numpy())
 
-        return metric.compute()
+                # Accumulate the loss
+                batch_size = labels.size(0)
+                total_loss += loss.item() * batch_size
+                total_samples += batch_size
+
+                # Add predictions and references to metric
+                if metric:
+                    metric.add_batch(predictions=predictions.cpu().numpy(),
+                                     references=labels.cpu().numpy())
+
+        # Compute the average loss
+        avg_loss = total_loss / total_samples
+
+        # Compute other metrics if provided
+        other_metrics = metric.compute() if metric else None
+
+        return {"loss": avg_loss, "metrics": other_metrics}
 
     # Load the dataset
     dataset = SentimentTreeBank(path="stanfordSentimentTreebank", split_words=True)
@@ -114,13 +134,13 @@ def transformer_sentiment_analysis():
         print(f"Epoch {epoch + 1}/{epochs}")
         train_loss = train_epoch(model, train_loader, optimizer, dev)
         val_loss = evaluate_model(model, val_loader, dev, metric)['loss']
-        val_accuracy = evaluate_model(model, val_loader, dev, metric)
-        train_accuracy = evaluate_model(model, train_loader, dev, metric)
+        val_accuracy = evaluate_model(model, val_loader, dev, metric)['metrics']['accuracy']
+        train_accuracy = evaluate_model(model, train_loader, dev, metric)['metrics']['accuracy']
         train_losses.append(train_loss)
-        val_accuracies.append(val_accuracy['accuracy'])
-        train_accuracy.append(train_accuracy['accuracy'])
+        val_accuracies.append(val_accuracy)
+        train_accuracy.append(train_accuracy)
         val_losses.append(val_loss)
-        print(f"Train Loss: {train_loss:.4f}, Validation Accuracy: {val_accuracy['accuracy']:.4f}")
+        print(f"Train Loss: {train_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}")
 
     # Plot training loss and validation accuracy
     epochs_range = list(range(1, epochs + 1))
