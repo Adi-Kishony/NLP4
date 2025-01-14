@@ -93,6 +93,9 @@ def transformer_sentiment_analysis():
     train_data = dataset.get_train_set()
     val_data = dataset.get_validation_set()
     test_data = dataset.get_test_set()
+    rare_words_examples_indices = get_rare_words_examples(test_data, dataset)
+    negated_polarity_examples_indices = get_negated_polarity_examples(
+        test_data)
 
     # Prepare sentences and labels
     train_sentences = [" ".join(sent.text) for sent in train_data]
@@ -101,9 +104,6 @@ def transformer_sentiment_analysis():
     val_labels = [int(sent.sentiment_class) for sent in val_data]
     test_sentences = [" ".join(sent.text) for sent in test_data]
     test_labels = [int(sent.sentiment_class) for sent in test_data]
-    rare_words_examples_indices = get_rare_words_examples(test_sentences, dataset)
-    negated_polarity_examples_indices = get_negated_polarity_examples(
-        test_sentences)
     test_rare_sentences = test_sentences[rare_words_examples_indices]
     test_rare_labels = test_labels[rare_words_examples_indices]
     test_neg_sentiment = test_sentences[negated_polarity_examples_indices]
