@@ -53,6 +53,7 @@ def transformer_sentiment_analysis():
         model.eval()
         total_loss = 0
         total_samples = 0
+        print(f"metric {metric}")
 
         for batch in tqdm(data_loader, desc="Evaluating"):
             input_ids = batch['input_ids'].to(dev)
@@ -72,7 +73,7 @@ def transformer_sentiment_analysis():
                 total_samples += batch_size
 
                 # Add predictions and references to metric
-                if metric:
+                if metric is not None:
                     metric.add_batch(predictions=predictions.cpu().numpy(),
                                      references=labels.cpu().numpy())
 
@@ -80,7 +81,7 @@ def transformer_sentiment_analysis():
         avg_loss = total_loss / total_samples
 
         # Compute other metrics if provided
-        other_metrics = metric.compute() if metric else None
+        other_metrics = metric.compute() if metric is not None else None
 
         return {"loss": avg_loss, "metrics": other_metrics}
 
