@@ -90,12 +90,15 @@ def transformer_sentiment_analysis():
     # Split data into train and validation sets
     train_data = dataset.get_train_set()
     val_data = dataset.get_validation_set()
+    test_data = dataset.get_test_set()
 
     # Prepare sentences and labels
     train_sentences = [" ".join(sent.text) for sent in train_data]
     train_labels = [int(sent.sentiment_class) for sent in train_data]
     val_sentences = [" ".join(sent.text) for sent in val_data]
     val_labels = [int(sent.sentiment_class) for sent in val_data]
+    test_sentences = [" ".join(sent.text) for sent in test_data]
+    test_labels = [int(sent.sentiment_class) for sent in test_data]
 
     # Parameters
     dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -112,12 +115,15 @@ def transformer_sentiment_analysis():
     # Tokenization
     train_encodings = tokenizer(train_sentences, truncation=True, padding=True, max_length=128)
     val_encodings = tokenizer(val_sentences, truncation=True, padding=True, max_length=128)
+    test_encodings = tokenizer(test_sentences, truncation=True, padding=True, max_length=128)
 
     # Datasets and DataLoaders
     train_dataset = Dataset(train_encodings, train_labels)
     val_dataset = Dataset(val_encodings, val_labels)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
+    test_dataset = Dataset(test_encodings, test_labels)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
     # Optimizer
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
@@ -141,6 +147,12 @@ def transformer_sentiment_analysis():
         train_accuracies.append(train_accuracy)
         val_losses.append(val_loss)
         print(f"Train Loss: {train_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}")
+
+    test_loss = evaluate_model(model, test_loader, dev, metric)['loss']
+    test_accuracy = evaluate_model(model, test_loader, dev, metric)['metrics'][
+        'accuracy']
+
+    print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
 
     # Plot training loss and validation accuracy
     epochs_range = list(range(1, epochs + 1))
@@ -166,6 +178,8 @@ def transformer_sentiment_analysis():
     plt.grid()
     plt.savefig(f'acc_transformer.png')
     plt.show()
+
+
 
 
 if __name__ == '__main__':
