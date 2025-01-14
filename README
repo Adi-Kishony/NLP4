@@ -1,0 +1,11 @@
+The only deviation we made from the given template was adding the following getter methods to the DataMapper class:
+
+    def get_dataset(self):
+        return self.sentiment_dataset
+
+    def get_sentences(self, data_subset=TRAIN):
+        return self.sentences[data_subset]
+
+This was done so that we could access the dataset and sentences from the
+DataMapper object and use then in the getter function for the special subsets during evaluation.
+We also therefore added an optional DataManager parameter to this function - when supplied we evaluate for the special subsets.
