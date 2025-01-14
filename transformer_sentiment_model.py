@@ -6,6 +6,8 @@ def transformer_sentiment_analysis():
     from tqdm import tqdm
     import matplotlib.pyplot as plt
     from data_loader import SentimentTreeBank
+    from data_loader import get_negated_polarity_examples, \
+        get_rare_words_examples
 
     class Dataset(torch.utils.data.Dataset):
         """
@@ -99,6 +101,13 @@ def transformer_sentiment_analysis():
     val_labels = [int(sent.sentiment_class) for sent in val_data]
     test_sentences = [" ".join(sent.text) for sent in test_data]
     test_labels = [int(sent.sentiment_class) for sent in test_data]
+    rare_words_examples_indices = get_rare_words_examples(test_sentences, dataset)
+    negated_polarity_examples_indices = get_negated_polarity_examples(
+        test_sentences)
+    test_rare_sentences = test_sentences[rare_words_examples_indices]
+    test_rare_labels = test_labels[rare_words_examples_indices]
+    test_neg_sentiment = test_sentences[negated_polarity_examples_indices]
+    test_neg_sentiment_labels = test_labels[negated_polarity_examples_indices]
 
     # Parameters
     dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -116,6 +125,8 @@ def transformer_sentiment_analysis():
     train_encodings = tokenizer(train_sentences, truncation=True, padding=True, max_length=128)
     val_encodings = tokenizer(val_sentences, truncation=True, padding=True, max_length=128)
     test_encodings = tokenizer(test_sentences, truncation=True, padding=True, max_length=128)
+    test_rare_encodings = tokenizer(test_rare_sentences, truncation=True, padding=True, max_length=128)
+    test_neg_encodings = tokenizer(test_neg_sentiment, truncation=True, padding=True, max_length=128)
 
     # Datasets and DataLoaders
     train_dataset = Dataset(train_encodings, train_labels)
@@ -124,6 +135,10 @@ def transformer_sentiment_analysis():
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
     test_dataset = Dataset(test_encodings, test_labels)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
+    test_rare_dataset = Dataset(test_rare_encodings, test_rare_labels)
+    test_rare_loader = DataLoader(test_rare_dataset, batch_size=batch_size)
+    test_neg_dataset = Dataset(test_neg_encodings, test_neg_sentiment_labels)
+    test_neg_loader = DataLoader(test_neg_dataset, batch_size=batch_size)
 
     # Optimizer
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
@@ -151,8 +166,12 @@ def transformer_sentiment_analysis():
     test_loss = evaluate_model(model, test_loader, dev, metric)['loss']
     test_accuracy = evaluate_model(model, test_loader, dev, metric)['metrics'][
         'accuracy']
+    neg_acc = evaluate_model(model, test_neg_loader, dev, metric)['metrics']['accuracy']
+    rare_acc = evaluate_model(model, test_rare_loader, dev, metric)['metrics']['accuracy']
 
     print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+    print(f"Negated Sentiment Accuracy: {neg_acc:.4f}")
+    print(f"Rare Words Accuracy: {rare_acc:.4f}")
 
     # Plot training loss and validation accuracy
     epochs_range = list(range(1, epochs + 1))
