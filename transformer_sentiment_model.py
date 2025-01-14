@@ -169,5 +169,6 @@ def transformer_sentiment_analysis():
 
 
 if __name__ == '__main__':
+    print("transformer new")
     transformer_sentiment_analysis()
 
